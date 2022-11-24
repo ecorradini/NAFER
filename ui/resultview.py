@@ -1,5 +1,6 @@
 from itertools import count
 
+import pandas as pd
 from PyQt6.QtWidgets import QWidget
 from PyQt6 import uic
 from sklearn.model_selection import train_test_split
@@ -11,7 +12,9 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
 import random
 
+from utilities.feature_strength import FeatureStrength
 from utilities.nb_classifier import NBClassifier
+from utilities.pandas_model import PandasModel
 
 
 class ResultView(QWidget):
@@ -35,8 +38,48 @@ class ResultView(QWidget):
         self.current_model = self.models[0]
 
         self.button_run.clicked.connect(self._run_classifier)
+       #self.button_run.clicked.connect(self._test)
 
         self.setWindowTitle(name)
+
+    def _test(self):
+        self._preprocess()
+        nodes_dict = {}
+        for index, row in self.data.iterrows():
+            _class = row["class"]
+            _confidence = row["conf"]
+            _features = [row[x] for x in self.data.columns if x not in ["class", "conf"]]
+            self.network.add_node(index)
+            nodes_dict[index] = {
+                "features": _features,
+                "class": _class,
+                "confidence": _confidence
+            }
+        nx.set_node_attributes(self.network, nodes_dict)
+
+        edges = set()
+        for node in nodes_dict.keys():
+            for node2 in nodes_dict.keys():
+                if node != node2 and \
+                        nodes_dict[node]["confidence"] <= nodes_dict[node2]["confidence"] and \
+                        (node2, node) not in edges:
+                    edges.add((node, node2))
+        self.network.add_edges_from(edges)
+
+        self.feature_names = [x for x in self.data.columns if x not in ["class", "conf"]]
+
+        _feature_strength = FeatureStrength(self.network)
+        _strengths = {}
+        for key, node in self.network.nodes.items():
+            _features = node["features"]
+            for k, feature in enumerate(_features):
+                _strength = _feature_strength.get_instance_feature_strength((key, node), k)
+                try:
+                    _strengths[self.feature_names[k]].append(_strength)
+                except:
+                    _strengths[self.feature_names[k]] = [_strength]
+        print(_strengths)
+
 
     def _on_model_combobox_changed(self, value):
         self.current_model = value
@@ -52,6 +95,12 @@ class ResultView(QWidget):
             le.fit(non_numerics[column])
             self.data[column] = le.transform(non_numerics[column])
         self.data.fillna(0, inplace=True)
+
+        scaler = preprocessing.MinMaxScaler()
+        _columns = _features = [x for x in self.data.columns if x != self.current_class]
+        self.data[_columns] = scaler.fit_transform(self.data[_columns])
+
+        print(self.data)
 
     def _run_classifier(self):
         self._preprocess()
@@ -77,10 +126,11 @@ class ResultView(QWidget):
 
         self.classified_data["_class"] = labels
         self.classified_data["_confidence"] = probabilities
+        self.feature_names = [x for x in self.classified_data.columns if x not in ["_class", "_confidence"]]
 
-        self.build_network()
+        self._build_network()
 
-    def build_network(self):
+    def _build_network(self):
         nodes_dict = {}
         for index, row in self.classified_data.iterrows():
             _class = row["_class"]
@@ -106,26 +156,53 @@ class ResultView(QWidget):
         print(len(self.network.nodes))
         print(len(self.network.edges))
 
-        self.draw_graph_sample()
+        self._draw_graph_sample()
 
-    def draw_graph_sample(self):
-        k = 20
+    def _draw_graph_sample(self):
+        k = 40
         sampled_nodes = random.sample(self.network.nodes, k)
         sampled_graph = self.network.subgraph(sampled_nodes)
 
-        figure = plt.figure(figsize=(4, 4))
+        in_degrees = list(self.network.in_degree(list(sampled_graph.nodes)))
+
+        figure = plt.figure(figsize=(5, 5))
         network_canvas = FigureCanvas(figure)
         figure.clf()
-        figure.suptitle('Sample subgraph (20 nodes)', fontsize=14)
+        figure.suptitle('Sample subgraph (40 nodes)', fontsize=14)
         pos = nx.random_layout(sampled_graph)
         groups = set(nx.get_node_attributes(sampled_graph, 'class').values())
         mapping = dict(zip(sorted(groups), count()))
         nodes = sampled_graph.nodes()
         colors = [mapping[sampled_graph.nodes[n]['class']] for n in nodes]
-        nx.draw(sampled_graph, pos=pos, with_labels=False, node_color=colors)
+        nx.draw(sampled_graph, pos=pos, with_labels=False, node_color=colors, nodelist=[n[0] for n in in_degrees], node_size=[n[1] for n in in_degrees])
         network_canvas.draw_idle()
         self.layout_graph.addWidget(network_canvas)
 
+        self._calc_all_strength()
+
+    def _calc_all_strength(self):
+        _feature_strength = FeatureStrength(self.network)
+        _strengths = {}
+        for key, node in self.network.nodes.items():
+            _features = node["features"]
+            for k, feature in enumerate(_features):
+                _strength = _feature_strength.get_instance_feature_strength((key, node), k)
+                try:
+                    _strengths[self.feature_names[k]].append(_strength)
+                except:
+                    _strengths[self.feature_names[k]] = [_strength]
+        print(_strengths)
+        s_df = pd.DataFrame.from_dict(_strengths)
+        self.model = PandasModel(s_df)
+        self.table_strength_single.setModel(self.model)
+
+        _avg_strengths = {"feature": [], "strength": []}
+        for feature, values in _strengths.items():
+            _avg_strengths["feature"].append(feature)
+            _avg_strengths["strength"].append(sum(values)/len(values))
+        as_df = pd.DataFrame.from_dict(_avg_strengths)
+        self.model2 = PandasModel(as_df)
+        self.table_strength_full.setModel(self.model2)
 
 
 
