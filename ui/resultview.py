@@ -12,9 +12,15 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
 import random
 
+from sklearn.preprocessing import MinMaxScaler
+
 from utilities.feature_strength import FeatureStrength
+from utilities.mlp_classifier import MLPClassifier
 from utilities.nb_classifier import NBClassifier
 from utilities.pandas_model import PandasModel
+from utilities.rf_classifier import RFClassifier
+from utilities.svmp_classifier import SVMPClassifier
+from utilities.svmr_classifier import SVMRClassifier
 
 
 class ResultView(QWidget):
@@ -31,7 +37,7 @@ class ResultView(QWidget):
         self.current_class = self.data.columns[0]
         self.combo_class.currentTextChanged.connect(self._on_class_combobox_changed)
 
-        self.models = ["NB", "SVMP", "SVMR", "ANN", "RF"]
+        self.models = ["NB", "SVMP", "SVMR", "MLP", "RF"]
         self.combo_models.clear()
         self.combo_models.addItems(self.models)
         self.combo_models.currentTextChanged.connect(self._on_model_combobox_changed)
@@ -113,6 +119,15 @@ class ResultView(QWidget):
         classifier = None
         if self.current_model == "NB":
             classifier = NBClassifier(x_train, x_test, y_train, y_test)
+        elif self.current_model == "SVMP":
+            classifier = SVMPClassifier(x_train, x_test, y_train, y_test)
+        elif self.current_model == "SVMR":
+            classifier = SVMRClassifier(x_train, x_test, y_train, y_test)
+        elif self.current_model == "MLP":
+            classifier = MLPClassifier(x_train, x_test, y_train, y_test)
+        elif self.current_model == "RF":
+            classifier = RFClassifier(x_train, x_test, y_train, y_test)
+
         y_pred = classifier.run()
         self.label_accuracy.setText(f"Accuracy: {metrics.accuracy_score(y_test, y_pred)}")
 
@@ -193,6 +208,8 @@ class ResultView(QWidget):
                     _strengths[self.feature_names[k]] = [_strength]
         print(_strengths)
         s_df = pd.DataFrame.from_dict(_strengths)
+        # scaler = MinMaxScaler()
+        # s_df[s_df.columns] = scaler.fit_transform(s_df)
         self.model = PandasModel(s_df)
         self.table_strength_single.setModel(self.model)
 
