@@ -232,7 +232,11 @@
          </widget>
         </item>
         <item>
-         <widget class="QTableView" name="table_strength_single"/>
+         <widget class="QTableView" name="table_strength_single">
+          <attribute name="verticalHeaderCascadingSectionResizes">
+           <bool>true</bool>
+          </attribute>
+         </widget>
         </item>
         <item>
          <widget class="QLabel" name="label_4">

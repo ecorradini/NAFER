@@ -76,6 +76,12 @@
           <height>300</height>
          </size>
         </property>
+        <attribute name="horizontalHeaderCascadingSectionResizes">
+         <bool>false</bool>
+        </attribute>
+        <attribute name="verticalHeaderCascadingSectionResizes">
+         <bool>false</bool>
+        </attribute>
        </widget>
       </item>
      </layout>
