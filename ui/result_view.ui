@@ -227,7 +227,7 @@
         <item>
          <widget class="QLabel" name="label_3">
           <property name="text">
-           <string>Strength of each feature instance</string>
+           <string>Relevance of each feature instance</string>
           </property>
          </widget>
         </item>
@@ -241,7 +241,7 @@
         <item>
          <widget class="QLabel" name="label_4">
           <property name="text">
-           <string>Overall feature strength</string>
+           <string>Overall feature relevance</string>
           </property>
          </widget>
         </item>

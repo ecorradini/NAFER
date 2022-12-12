@@ -31,16 +31,16 @@ class FeatureStrength:
 
     def _s_fki(self, vi, k):
         if f"strength_{k}" in vi[1]:
-            return vi[1][f"strength_{k}"]
+            return vi[1][f"d_{k}"], vi[1][f"strength_{k}"]
 
         _dki = self._damping_factor(vi, k)
-        print(f"d{k}{vi[0]} {_dki}")
 
         # CASO DAMPING FACTOR 0 (no archi uscenti)
         if _dki == 0:
             _strength = 1 / len(self.network.nodes)
             nx.set_node_attributes(self.network, {vi[0]: {f"strength_{k}": _strength}})
-            return _strength
+            nx.set_node_attributes(self.network, {vi[0]: {f"d_{k}": _dki}})
+            return 0, _strength
 
         _left = (1 - _dki) / len(self.network.nodes)
 
@@ -53,12 +53,14 @@ class FeatureStrength:
         if _dki > 0 and len(v_in) == 0:
             _strength = (1 - _dki) / len(self.network.nodes)
             nx.set_node_attributes(self.network, {vi[0]: {f"strength_{k}": _strength}})
-            return _strength
+            nx.set_node_attributes(self.network, {vi[0]: {f"d_{k}": _dki}})
+            return _dki, _strength
 
-        _right = _dki * sum([self._s_fki((key, node), k) / self.network.out_degree(key) for key, node in v_in])
+        _right = _dki * sum([self._s_fki((key, node), k)[1] / self.network.out_degree(key) for key, node in v_in])
         _strength = _left + _right
         nx.set_node_attributes(self.network, {vi[0]: {f"strength_{k}": _strength}})
-        return _strength
+        nx.set_node_attributes(self.network, {vi[0]: {f"d_{k}": _dki}})
+        return _dki, _strength
 
     def get_instance_feature_strength(self, vi, k):
         return self._s_fki(vi, k)

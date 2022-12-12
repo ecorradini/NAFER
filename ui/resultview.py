@@ -28,6 +28,7 @@ class ResultView(QWidget):
     def __init__(self, data, name, parent=None):
         super(ResultView, self).__init__(parent)
         uic.loadUi('ui/result_view.ui', self)
+        self.dataset_name = name
         self.data = data
         self.classified_data = None
         self.network = nx.DiGraph()
@@ -47,45 +48,6 @@ class ResultView(QWidget):
        #self.button_run.clicked.connect(self._test)
 
         self.setWindowTitle(name)
-
-    def _test(self):
-        self._preprocess()
-        nodes_dict = {}
-        for index, row in self.data.iterrows():
-            _class = row["class"]
-            _confidence = row["conf"]
-            _features = [row[x] for x in self.data.columns if x not in ["class", "conf"]]
-            self.network.add_node(index)
-            nodes_dict[index] = {
-                "features": _features,
-                "class": _class,
-                "confidence": _confidence
-            }
-        nx.set_node_attributes(self.network, nodes_dict)
-
-        edges = set()
-        for node in nodes_dict.keys():
-            for node2 in nodes_dict.keys():
-                if node != node2 and \
-                        nodes_dict[node]["confidence"] <= nodes_dict[node2]["confidence"] and \
-                        (node2, node) not in edges:
-                    edges.add((node, node2))
-        self.network.add_edges_from(edges)
-
-        self.feature_names = [x for x in self.data.columns if x not in ["class", "conf"]]
-
-        _feature_strength = FeatureStrength(self.network)
-        _strengths = {}
-        for key, node in self.network.nodes.items():
-            _features = node["features"]
-            for k, feature in enumerate(_features):
-                _strength = _feature_strength.get_instance_feature_strength((key, node), k)
-                try:
-                    _strengths[self.feature_names[k]].append(_strength)
-                except:
-                    _strengths[self.feature_names[k]] = [_strength]
-        print(_strengths)
-
 
     def _on_model_combobox_changed(self, value):
         self.current_model = value
@@ -201,15 +163,14 @@ class ResultView(QWidget):
         for key, node in self.network.nodes.items():
             _features = node["features"]
             for k, feature in enumerate(_features):
-                _strength = _feature_strength.get_instance_feature_strength((key, node), k)
+                _dki, _strength = _feature_strength.get_instance_feature_strength((key, node), k)
                 try:
                     _strengths[self.feature_names[k]].append(_strength)
                 except:
                     _strengths[self.feature_names[k]] = [_strength]
         print(_strengths)
         s_df = pd.DataFrame.from_dict(_strengths)
-        # scaler = MinMaxScaler()
-        # s_df[s_df.columns] = scaler.fit_transform(s_df)
+        s_df.to_csv(f"{self.dataset_name.replace('.csv', '')}_{self.current_model}_strengths.csv", index=False)
         self.model = PandasModel(s_df)
         self.table_strength_single.setModel(self.model)
 
@@ -220,9 +181,3 @@ class ResultView(QWidget):
         as_df = pd.DataFrame.from_dict(_avg_strengths)
         self.model2 = PandasModel(as_df)
         self.table_strength_full.setModel(self.model2)
-
-
-
-
-
-
