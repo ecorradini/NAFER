@@ -12,7 +12,7 @@ The software is developed in Python 3. You can find a list of all the packages r
 ### Usage
 The software has two parts:
 * Feature Relevance computation;
-* Sensitivity computation
+* Sensitivity computation.
 
 You can find all the relevant information in the linked paper.
 
