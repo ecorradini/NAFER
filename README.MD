@@ -1,5 +1,5 @@
 # NAFER [![made-with-python](https://img.shields.io/badge/Made%20with-Python-1f425f.svg)](https://www.python.org/)
-#### NAFER Another FEature Relevance
+### NAFER Another FEature Relevance
 
 This is the software developed to test the Feature Relevance and Sensitivity computation presented in [Model agnostic framework for explanation and characterization of
 black-box classifiers using network analysis techniques]().
