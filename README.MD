@@ -19,7 +19,7 @@ You can find all the relevant information in the linked paper.
 NAFER saves all the values computed in CSV files inside the project folder.
 
 ### Open source
-NAFER is open source. The usage and distribution is regulated by the [Apache 2.0 License](https://opensource.org/licenses/Apache-2.0) license.
+NAFER is open source. The usage and distribution are regulated by the [Apache 2.0 License](https://opensource.org/licenses/Apache-2.0) license.
 
 Attribution required: [Model agnostic framework for explanation and characterization of
 black-box classifiers using network analysis techniques]().
