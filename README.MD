@@ -7,13 +7,13 @@ black-box classifiers using network analysis techniques]().
 At current state, the software may have some bugs.
 
 ### Requirements
-The software is developed in Python 3. You can find a list of all the packages required in *requirements.txt*. The GUI is developed with PyQT6.
+The software is developed in Python 3. You can find a list of all the packages required in *requirements.txt*. The GUI is developed with PyQt6.
 
 ### Usage
 The software has two parts:
 * Feature Relevance computation;
 * Sensitivity computation.
-* 
+
 You can find all the relevant information in the linked paper.
 
 NAFER saves all the values computed in CSV files inside the project folder.
