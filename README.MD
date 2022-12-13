@@ -1,4 +1,4 @@
-# NAFER [![made-with-python](https://img.shields.io/badge/Made%20with-Python-1f425f.svg)](https://www.python.org/)
+# NAFER [![made-with-python](https://img.shields.io/badge/Made%20with-Python-1f425f.svg)](https://www.python.org/) [![License: CC BY 4.0](https://img.shields.io/badge/License-CC_BY_4.0-lightgrey.svg)](https://creativecommons.org/licenses/by/4.0/)
 ### NAFER Another FEature Relevance
 
 This is the software developed to test the Feature Relevance and Sensitivity computation presented in [Model agnostic framework for explanation and characterization of
@@ -18,7 +18,7 @@ You can find all the relevant information in the linked paper.
 
 NAFER saves all the values computed in CSV files inside the project folder.
 
-### Open source [![License: CC BY 4.0](https://img.shields.io/badge/License-CC_BY_4.0-lightgrey.svg)](https://creativecommons.org/licenses/by/4.0/)
+### Open source
 This software is open source. Its usage and distribution is regulated by the [ Creative Commons](https://creativecommons.org/licenses/by/4.0/) license:
 * You can distribute, remix, tweak, and build upon this work. 
 * Attribution of the above paper required.
