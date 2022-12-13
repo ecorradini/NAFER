@@ -1,4 +1,4 @@
-# NAFER [![made-with-python](https://img.shields.io/badge/Made%20with-Python-1f425f.svg)](https://www.python.org/) [![License: CC BY 4.0](https://img.shields.io/badge/License-CC_BY_4.0-lightgrey.svg)](https://creativecommons.org/licenses/by/4.0/)
+# NAFER [![made-with-python](https://img.shields.io/badge/Made%20with-Python-1f425f.svg)](https://www.python.org/) [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 ### NAFER Another FEature Relevance
 
 This is the software developed to test the Feature Relevance and Sensitivity computation presented in [Model agnostic framework for explanation and characterization of
@@ -19,9 +19,12 @@ You can find all the relevant information in the linked paper.
 NAFER saves all the values computed in CSV files inside the project folder.
 
 ### Open source
-This software is open source. Its usage and distribution is regulated by the [ Creative Commons](https://creativecommons.org/licenses/by/4.0/) license:
-* You can distribute, remix, tweak, and build upon this work. 
-* Attribution of the above paper required.
+NAFER is open source. The usage and distribution is regulated by the [Apache 2.0 License](https://opensource.org/licenses/Apache-2.0) license.
+
+Attribution required: [Model agnostic framework for explanation and characterization of
+black-box classifiers using network analysis techniques]().
+
+Refer to the license for any additional info.
 
 ### Contact
 You can contact me at: [e.corradini@univpm.it](mailto:e.corradini@univpm.it).
