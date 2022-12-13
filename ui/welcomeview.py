@@ -9,6 +9,7 @@ from PyQt6 import uic, QtWidgets
 from PyQt6.QtWidgets import QWidget, QFileDialog
 
 from ui.resultview import ResultView
+from ui.sensitivityview import SensitivityView
 from utilities.pandas_model import PandasModel
 
 
@@ -25,7 +26,8 @@ class WelcomeView(QWidget):
 
         self.custom_button.clicked.connect(self._select_csv_dialog)
 
-        self.next_button.clicked.connect(self._go_next)
+        self.relevance_button.clicked.connect(self._go_relevance)
+        self.sensitivity_button.clicked.connect(self._go_sensitivity)
 
     def _get_default_csvs(self):
         files_1 = [f for f in listdir('default_datasets') if isfile(join('default_datasets', f))]
@@ -74,10 +76,19 @@ class WelcomeView(QWidget):
         self.current_dataset = data
         self.current_name = url.fileName()
 
-    def _go_next(self):
+    def _go_relevance(self):
         if self.current_dataset is not None:
             self.result_view = ResultView(data=self.current_dataset, name=self.current_name)
             self.result_view.show()
+        else:
+            error_dialog = QtWidgets.QErrorMessage()
+            error_dialog.showMessage('Please, select or add a dataset!')
+            error_dialog.exec()
+
+    def _go_sensitivity(self):
+        if self.current_dataset is not None:
+            self.sensitivity_view = SensitivityView(data=self.current_dataset, name=self.current_name)
+            self.sensitivity_view.show()
         else:
             error_dialog = QtWidgets.QErrorMessage()
             error_dialog.showMessage('Please, select or add a dataset!')

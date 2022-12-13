@@ -14,9 +14,11 @@ import random
 
 from sklearn.preprocessing import MinMaxScaler
 
+from utilities.classifier import Classifier
 from utilities.feature_strength import FeatureStrength
 from utilities.mlp_classifier import MLPClassifier
 from utilities.nb_classifier import NBClassifier
+from utilities.network import Network
 from utilities.pandas_model import PandasModel
 from utilities.rf_classifier import RFClassifier
 from utilities.svmp_classifier import SVMPClassifier
@@ -55,84 +57,16 @@ class ResultView(QWidget):
     def _on_class_combobox_changed(self, value):
         self.current_class = value
 
-    def _preprocess(self):
-        le = preprocessing.LabelEncoder()
-        numerics = ['int16', 'int32', 'int64', 'float16', 'float32', 'float64']
-        non_numerics = self.data.select_dtypes(exclude=numerics)
-        for column in non_numerics:
-            le.fit(non_numerics[column])
-            self.data[column] = le.transform(non_numerics[column])
-        self.data.fillna(0, inplace=True)
-
-        scaler = preprocessing.MinMaxScaler()
-        _columns = _features = [x for x in self.data.columns if x != self.current_class]
-        self.data[_columns] = scaler.fit_transform(self.data[_columns])
-
-        print(self.data)
-
     def _run_classifier(self):
-        self._preprocess()
-        feature_cols = [f for f in self.data.columns if f != self.current_class]
-        x = self.data[feature_cols]
-        y = self.data[self.current_class]
+        classifier = Classifier(self.data, self.current_model, self.current_class)
+        accuracy, self.classified_data, self.feature_names = classifier.run()
 
-        x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.3, random_state=1)
-
-        classifier = None
-        if self.current_model == "NB":
-            classifier = NBClassifier(x_train, x_test, y_train, y_test)
-        elif self.current_model == "SVMP":
-            classifier = SVMPClassifier(x_train, x_test, y_train, y_test)
-        elif self.current_model == "SVMR":
-            classifier = SVMRClassifier(x_train, x_test, y_train, y_test)
-        elif self.current_model == "MLP":
-            classifier = MLPClassifier(x_train, x_test, y_train, y_test)
-        elif self.current_model == "RF":
-            classifier = RFClassifier(x_train, x_test, y_train, y_test)
-
-        y_pred = classifier.run()
-        self.label_accuracy.setText(f"Accuracy: {metrics.accuracy_score(y_test, y_pred)}")
-
-        self.classified_data = x_test #pd.concat([x_train, x_test])
-        labels = y_pred #list(y_train) + list(y_pred)
-
-        proba = classifier.get_proba()
-        probabilities = []
-        for proba in proba:
-            probabilities.append(round(max(proba), 2))
-
-        self.classified_data["_class"] = labels
-        self.classified_data["_confidence"] = probabilities
-        self.feature_names = [x for x in self.classified_data.columns if x not in ["_class", "_confidence"]]
+        self.label_accuracy.setText(f"Accuracy: {accuracy}")
 
         self._build_network()
 
     def _build_network(self):
-        nodes_dict = {}
-        for index, row in self.classified_data.iterrows():
-            _class = row["_class"]
-            _confidence = row["_confidence"]
-            _features = [row[x] for x in self.classified_data.columns if x not in ["_class", "_confidence"]]
-            self.network.add_node(index)
-            nodes_dict[index] = {
-                "features": _features,
-                "class": _class,
-                "confidence": _confidence
-            }
-        nx.set_node_attributes(self.network, nodes_dict)
-
-        edges = set()
-        for node in nodes_dict.keys():
-            for node2 in nodes_dict.keys():
-                if node != node2 and \
-                        nodes_dict[node]["confidence"] <= nodes_dict[node2]["confidence"] and \
-                        (node2, node) not in edges:
-                    edges.add((node, node2))
-        self.network.add_edges_from(edges)
-
-        print(len(self.network.nodes))
-        print(len(self.network.edges))
-
+        self.network = Network(self.classified_data).build_network()
         self._draw_graph_sample()
 
     def _draw_graph_sample(self):
@@ -159,25 +93,12 @@ class ResultView(QWidget):
 
     def _calc_all_strength(self):
         _feature_strength = FeatureStrength(self.network)
-        _strengths = {}
-        for key, node in self.network.nodes.items():
-            _features = node["features"]
-            for k, feature in enumerate(_features):
-                _dki, _strength = _feature_strength.get_instance_feature_strength((key, node), k)
-                try:
-                    _strengths[self.feature_names[k]].append(_strength)
-                except:
-                    _strengths[self.feature_names[k]] = [_strength]
-        print(_strengths)
-        s_df = pd.DataFrame.from_dict(_strengths)
-        s_df.to_csv(f"{self.dataset_name.replace('.csv', '')}_{self.current_model}_strengths.csv", index=False)
-        self.model = PandasModel(s_df)
+        strengths_df = _feature_strength.compute_strenghts(self.feature_names)
+
+        strengths_df.to_csv(f"{self.dataset_name.replace('.csv', '')}_{self.current_model}_strengths.csv", index=False)
+        self.model = PandasModel(strengths_df)
         self.table_strength_single.setModel(self.model)
 
-        _avg_strengths = {"feature": [], "strength": []}
-        for feature, values in _strengths.items():
-            _avg_strengths["feature"].append(feature)
-            _avg_strengths["strength"].append(sum(values)/len(values))
-        as_df = pd.DataFrame.from_dict(_avg_strengths)
+        as_df = _feature_strength.compute_avg_strenghts()
         self.model2 = PandasModel(as_df)
         self.table_strength_full.setModel(self.model2)

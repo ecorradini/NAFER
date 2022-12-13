@@ -1,6 +1,6 @@
 import networkx as nx
 import math
-
+import pandas as pd
 
 class FeatureStrength:
     def __init__(self, network):
@@ -15,10 +15,10 @@ class FeatureStrength:
         pi = vi[1]["confidence"]
         pj = vj[1]["confidence"]
         if vi[1]["class"] != vj[1]["class"]:
-            print(f"s_f{k}{vi[0]}_f{k}{vj[0]} {round((1 - pi) * pj * (1 - dist), 4)}")
+            #print(f"s_f{k}{vi[0]}_f{k}{vj[0]} {round((1 - pi) * pj * (1 - dist), 4)}")
             return round((1 - pi) * pj * (1 - dist), 4)
         else:
-            print(f"s_f{k}{vi[0]}_f{k}{vj[0]} {round((1 - pi) * (1 - pj) * dist, 4)}")
+            #print(f"s_f{k}{vi[0]}_f{k}{vj[0]} {round((1 - pi) * (1 - pj) * dist, 4)}")
             return round((1 - pi) * (1 - pj) * dist, 4)
 
     def _damping_factor(self, vi, k):
@@ -29,7 +29,7 @@ class FeatureStrength:
         _strength_out = [self._s_fki_fkj(vi, (key, node), k) for key, node in v_out]
         return round(self._sig(sum(_strength_out) / len(_strength_out) if len(v_out) > 0 else 0, len(self.network.nodes)), 4)
 
-    def _s_fki(self, vi, k):
+    def s_fki(self, vi, k):
         if f"strength_{k}" in vi[1]:
             return vi[1][f"d_{k}"], vi[1][f"strength_{k}"]
 
@@ -56,12 +56,31 @@ class FeatureStrength:
             nx.set_node_attributes(self.network, {vi[0]: {f"d_{k}": _dki}})
             return _dki, _strength
 
-        _right = _dki * sum([self._s_fki((key, node), k)[1] / self.network.out_degree(key) for key, node in v_in])
+        _right = _dki * sum([self.s_fki((key, node), k)[1] / self.network.out_degree(key) for key, node in v_in])
         _strength = _left + _right
         nx.set_node_attributes(self.network, {vi[0]: {f"strength_{k}": _strength}})
         nx.set_node_attributes(self.network, {vi[0]: {f"d_{k}": _dki}})
         return _dki, _strength
 
-    def get_instance_feature_strength(self, vi, k):
-        return self._s_fki(vi, k)
+    def compute_strenghts(self, feature_names):
+        self._strengths = {"node": []}
+        for key, node in self.network.nodes.items():
+            _features = node["features"]
+            self._strengths["node"].append(key)
+            for k, feature in enumerate(_features):
+                _dki, _strength = self.s_fki((key, node), k)
+                try:
+                    self._strengths[feature_names[k]].append(_strength)
+                except:
+                    self._strengths[feature_names[k]] = [_strength]
+
+        return pd.DataFrame.from_dict(self._strengths)
+
+    def compute_avg_strenghts(self):
+        _avg_strengths = {"feature": [], "strength": []}
+        for feature, values in self._strengths.items():
+            if feature != "node":
+                _avg_strengths["feature"].append(feature)
+                _avg_strengths["strength"].append(sum(values) / len(values))
+        return pd.DataFrame.from_dict(_avg_strengths)
 
