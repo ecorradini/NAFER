@@ -47,7 +47,6 @@ class Sensitivity:
         self.sensitivities["node"] = estimated_strengths["node"]
         return self.sensitivities
 
-
     def compute_overall_sensitivity(self):
         df = self.sensitivities.drop("node", axis=1).mean().to_frame()
         df.columns = ["sensitivity"]
